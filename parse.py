@@ -21,10 +21,12 @@
 #                                                                      ⠀⠀⠀⠀⠀⠀⠀⠰⠁⢀⠃⢇⢉⠆⠱⡀⡴⠁⡘⠀⠀⠀⠀⠀⠀⢀⠊⠀⠀⠀⠀⣆⡈⡢⠊⢠⡡⡱⠁⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀    #
 #                                                                      ⠀⠀⠀⠀⠀⠀⠀⢰⠀⠈⠀⠈⢦⠉⡢⡈⠑⡺⠃⠀⠀⠀⠀⢀⠔⠁⠀⠀⠀⠀⠀⠈⠣⣅⠔⢔⠔⠁⠀⠀⠀⠀⠜⠀⠀⠀⠀⠀⠀    #
 
-from pathlib import Path
 import os
+from pathlib import Path
 
 CONFIG_PATH = Path.home() / ".config/mycode/mycoderc"
+CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+CONFIG_PATH.touch(exist_ok=True)
 
 def parse_config():
   current_group = None
