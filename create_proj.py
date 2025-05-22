@@ -12,8 +12,23 @@
 #                                                             ⣷⣶⣶⣶⣶⣶⣶⣶⣶⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣶⣶⣶⣶⣶⣶⣶⣾   #
 
 import os
+import json
 import requests
 import subprocess
+
+github_path = os.path.expanduser("~/.config/mycode/config.json")
+
+def input_conf():
+  with open(github_path) as f:
+    config_file = json.load(f)
+
+  username = input("Enter your GitHub username: ")
+  token = input("Enter your GitHub token: ")
+  config_file["github"]["username"] = username
+  config_file["github"]["token"] = token
+
+  with open(github_path, "w") as f:
+    json.dump(config_file, f, indent=2)
 
 def create_github_repo(repo_name, username, token):
     url = "https://api.github.com/user/repos"
@@ -30,12 +45,13 @@ def create_github_repo(repo_name, username, token):
         return f"https://github.com/{username}/{repo_name}.git"
     else:
         print(f"Error creating repository: {response.json()}")
+        input_conf()
         return None
 
 def create_project(project_name, target_dir, username, token):
     repo_url = create_github_repo(project_name, username, token)
     if not repo_url:
-        print("Failed to create GitHub repository. Exiting.")
+        print("Failed to create GitHub repository. \n Please rerun your command.")
         return
 
     project_path = os.path.join(target_dir, project_name)

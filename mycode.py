@@ -16,10 +16,8 @@ import argparse
 import subprocess
 import create_proj as cp
 
-github_path = os.path.expanduser("~/.config/mycode/config.json")
-
 def check_json():
-  if not os.path.exists(github_path):
+  if not os.path.exists(cp.github_path):
     data = {
       "github": {
         "username": "",
@@ -27,7 +25,7 @@ def check_json():
       }
     }
 
-    with open(github_path, "w") as f:
+    with open(cp.github_path, "w") as f:
       json.dump(data, f, indent=2)
 
 def create(project_name, target_dir):
@@ -36,20 +34,10 @@ def create(project_name, target_dir):
       print(f"Target directory does not exist: {target_dir}")
       return
   
-  with open(github_path) as f:
+  with open(cp.github_path) as f:
     config_file = json.load(f)
   username = config_file["github"].get("username", "").strip()
   token = config_file["github"].get("token", "").strip()
-
-  if not username.strip() or not token.strip():
-    username = input("Enter your GitHub username: ")
-    token = input("Enter your GitHub token: ")
-
-    config_file["github"]["username"] = username
-    config_file["github"]["token"] = token
-
-    with open(github_path, "w") as f:
-      json.dump(config_file, f, indent=2)
 
   cp.create_project(project_name, target_dir, username, token)
 
@@ -72,7 +60,7 @@ def open_project(project_name, not_close):
   else:
     print(f"Project '{project_name}' not found.")
 
-desc = ("✨ Manage and organize your projects with **mycode** ✨\n\n"
+desc = ("✨ Manage and organize your projects with mycode ✨\n\n"
 "📂 Requires a configuration file located at: `~/.config/mycode/mycoderc`\n\n"
 "💾 Configuration File Rules:\n"
 "  - `--add <path>`: Adds all subfolders in the specified path to global projects.\n"
