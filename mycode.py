@@ -10,6 +10,7 @@
 #                                                                               ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡛⠿⠟⣋⣍⣛⣋⣽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿    #
 
 import os
+import time
 import json
 import parse
 import argparse
@@ -45,10 +46,14 @@ def open_project(project_name, not_close):
   all_projects = parse.collect_projects(parse.config["projects_dir"], parse.config["specific_projects"], parse.config["remove_rules"])
   if project_name in all_projects:
     project_path = all_projects[project_name]
+    print("\033[0;96mEnjoy your work, sir.\033[0m")
+    time.sleep(1.5)
     print(f"Opening project '{project_name}'...")
+    time.sleep(0.5)
     subprocess.run(["code", project_path])
     if not not_close:
       print("Closing terminal...")
+      time.sleep(0.2)
       script = '''
       tell application "iTerm2"
           tell the current window
@@ -105,13 +110,18 @@ def main():
     all_projects = parse.collect_projects(parse.config["projects_dir"], parse.config["specific_projects"], parse.config["remove_rules"])
     if project_name in all_projects:
         open_project(project_name, False)
+    if project_name not in all_projects:
+      print("\033[0;96mEnjoy your work, sir.\033[0m")
   elif args.show:
     if args.show == "global":
       parse.print_proj()
+      print("\033[0;96mHere are your projects, sir\033[0m")
     elif args.show == "groups":
       parse.print_groups()
+      print("\033[0;96mHere are your projects, sir\033[0m")
     elif args.show in parse.config["groups"]:
       parse.print_group(args.show)
+      print("\033[0;96mHere are your projects, sir\033[0m")
     else:
       print(f"Group '{args.show}' not found.")
   elif args.project:
