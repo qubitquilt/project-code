@@ -15,7 +15,10 @@ import json
 import parse
 import argparse
 import subprocess
+import argcomplete
 import create_proj as cp
+from argcomplete.completers import ChoicesCompleter
+
 
 def check_json():
   if not os.path.exists(cp.github_path):
@@ -47,13 +50,13 @@ def open_project(project_name, not_close):
   if project_name in all_projects:
     project_path = all_projects[project_name]
     print("\033[0;96mEnjoy your work, sir.\033[0m")
-    time.sleep(1.5)
+    time.sleep(1.4)
     print(f"Opening project '{project_name}'...")
-    time.sleep(0.5)
+    time.sleep(0.4)
     subprocess.run(["code", project_path])
     if not not_close:
       print("Closing terminal...")
-      time.sleep(0.2)
+      time.sleep(0.1)
       script = '''
       tell application "iTerm2"
           tell the current window
@@ -98,10 +101,11 @@ def main():
 
   prog.add_argument("-s", "--show", nargs="?", const="global", help="Show the data list")
   prog.add_argument("-c", "--create", nargs=2, metavar=("project_name", "target_dir"), help="Create a new project and repository")
-  prog.add_argument("project", nargs="?", help="Name of project to open")
+  prog.add_argument("project", nargs="?", help="Name of project to open").completer = ChoicesCompleter(parse.proj_list)
   prog.add_argument("-n", "--not-close", action="store_true", help="Don't close terminal after opening project")
   prog.add_argument("-h", "--help", action="store_true", help=argparse.SUPPRESS)
 
+  argcomplete.autocomplete(prog, always_complete_options=False)
   args = prog.parse_args()
 
   if args.create:
