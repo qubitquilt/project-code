@@ -121,10 +121,15 @@ def print_group(name):
     print(proj)
 
 def print_proj():
-  projects = collect_projects(
-    config["projects_dir"],
-    config["specific_projects"],
-    config["remove_rules"]
-  )
+  projects = collect_projects(config["projects_dir"], config["specific_projects"], config["remove_rules"])
   for proj in projects:
     print(proj)
+
+def get_proj():                       
+    projects = collect_projects(config["projects_dir"], config["specific_projects"], config["remove_rules"])
+    proj_list = []
+    for proj in projects: 
+        proj_list.append(proj)
+    return proj_list
+
+proj_list = get_proj()
