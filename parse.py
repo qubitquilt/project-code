@@ -132,4 +132,8 @@ def get_proj():
         proj_list.append(proj)
     return proj_list
 
-proj_list = get_proj()
+def get_group():
+  group_list = list(config["groups"])
+  group_list.append("groups")
+  group_list.append("all")
+  return group_list

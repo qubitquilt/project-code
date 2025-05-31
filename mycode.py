@@ -88,7 +88,7 @@ desc = ("✨ Manage and organize your projects with mycode ✨\n\n"
 "          --remove ~/example/path/excluded_folder --from ~/example/path\n"
 "      }\n\n"
 "🛠 Commands:\n"
-"  - `mycode -s`: Show all global projects.\n"
+"  - `mycode -s all`: Show all global projects.\n"
 "  - `mycode -s groups`: Show all groups and their projects.\n"
 "  - `mycode -s <group_name>`: Show all projects in the specified group.\n"
 "  - `mycode <project_name>`: Open the specified project in VS Code.\n"
@@ -99,9 +99,9 @@ def main():
   check_json()
   prog = argparse.ArgumentParser(prog="mycode", add_help=False)
 
-  prog.add_argument("-s", "--show", nargs="?", const="global", help="Show the data list")
+  prog.add_argument("-s", "--show", nargs=1, help="Show the data list").completer = ChoicesCompleter(parse.get_group())
   prog.add_argument("-c", "--create", nargs=2, metavar=("project_name", "target_dir"), help="Create a new project and repository")
-  prog.add_argument("project", nargs="?", help="Name of project to open").completer = ChoicesCompleter(parse.proj_list)
+  prog.add_argument("project", nargs="?", help="Name of project to open").completer = ChoicesCompleter(parse.get_proj())
   prog.add_argument("-n", "--not-close", action="store_true", help="Don't close terminal after opening project")
   prog.add_argument("-h", "--help", action="store_true", help=argparse.SUPPRESS)
 
@@ -117,17 +117,18 @@ def main():
     if project_name not in all_projects:
       print("\033[0;96mEnjoy your work, sir.\033[0m")
   elif args.show:
-    if args.show == "global":
+    show_arg = args.show[0]
+    if show_arg == "all":
       parse.print_proj()
       print("\033[0;96mHere are your projects, sir\033[0m")
-    elif args.show == "groups":
+    elif show_arg == "groups":
       parse.print_groups()
       print("\033[0;96mHere are your projects, sir\033[0m")
-    elif args.show in parse.config["groups"]:
-      parse.print_group(args.show)
+    elif show_arg in parse.config["groups"]:
+      parse.print_group(show_arg)
       print("\033[0;96mHere are your projects, sir\033[0m")
     else:
-      print(f"Group '{args.show}' not found.")
+      print(f"Group '{show_arg}' not found.")
   elif args.project:
     open_project(args.project, args.not_close)
   if args.help or (not args.create and not args.show and not args.project):
