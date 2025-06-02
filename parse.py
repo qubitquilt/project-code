@@ -110,21 +110,6 @@ def collect_group_projects(group):
 
 config = parse_config()
 
-def print_groups():
-  for group_name, group_data in config["groups"].items():
-    print(f"Group: {group_name}")
-    for proj in collect_group_projects(group_data):
-      print(f"  - {proj}")
-
-def print_group(name):
-  for proj in collect_group_projects(config["groups"][name]):
-    print(proj)
-
-def print_proj():
-  projects = collect_projects(config["projects_dir"], config["specific_projects"], config["remove_rules"])
-  for proj in projects:
-    print(proj)
-
 def get_proj():                       
     projects = collect_projects(config["projects_dir"], config["specific_projects"], config["remove_rules"])
     proj_list = []

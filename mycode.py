@@ -19,7 +19,6 @@ import argcomplete
 import create_proj as cp
 from argcomplete.completers import ChoicesCompleter
 
-
 def check_json():
   if not os.path.exists(cp.github_path):
     data = {
