@@ -49,9 +49,9 @@ def open_project(project_name, not_close):
   if project_name in all_projects:
     project_path = all_projects[project_name]
     print("\033[0;96mEnjoy your work, sir.\033[0m")
-    time.sleep(1.4)
+    time.sleep(1.3)
     print(f"Opening project '{project_name}'...")
-    time.sleep(0.4)
+    time.sleep(0.3)
     subprocess.run(["code", project_path])
     if not not_close:
       print("Closing terminal...")
