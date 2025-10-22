@@ -2,3 +2,13 @@ temp
 improvements.md
 __pycache__
 .vscode
+*-debug.log
+*-error.log
+**/.DS_Store
+/.idea
+/dist
+/tmp
+/node_modules
+oclif.manifest.json
+yarn.lock
+pnpm-lock.yaml

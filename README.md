@@ -1,174 +1,229 @@
-<div align="center">
-  <img src="imgs/logo.png" width="320px" alt="Mycode Logo">
-</div>
+# Project Code CLI
 
-<br>
+> 🚀 **A powerful CLI tool for managing code projects with VS Code integration**
 
-<div align="center">
+[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
+[![Version](https://img.shields.io/npm/v/project-code.svg)](https://npmjs.org/package/project-code)
+[![Downloads/week](https://img.shields.io/npm/dw/project-code.svg)](https://npmjs.org/package/project-code)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[![Last Commit](https://custom-icon-badges.demolab.com/github/last-commit/marsdevx/mycode?logoColor=white&labelColor=2C2C2C&label=Last%20Commit&color=8A2BE2&logo=mark-github)](https://github.com/marsdevx/mycode/commits/main "Last Commit")
-[![Platforms](https://custom-icon-badges.demolab.com/static/v1?logoColor=white&labelColor=2C2C2C&label=Platforms&message=macOS%20|%20Linux&color=D32F2F&logo=device-desktop)](https://github.com/marsdevx/mycode "Platforms")
-<br>
-[![Languages](https://custom-icon-badges.demolab.com/static/v1?logoColor=white&labelColor=2C2C2C&label=Languages&message=Bash%20|%20Python%203.12&color=748ADB&logo=file-code)](https://github.com/marsdevx/mycode "Languages")
-[![GitHub API](https://custom-icon-badges.demolab.com/static/v1?logoColor=white&labelColor=2C2C2C&label=API&message=GitHub%20REST%20v3&color=F47F42&logo=code)](https://docs.github.com/en/rest "GitHub API")
-[![Shell Support](https://custom-icon-badges.demolab.com/static/v1?logoColor=white&labelColor=2C2C2C&label=Shell&message=Zsh%20%7C%20Bash&color=009688&logo=gnu-bash)](https://github.com/marsdevx/mycode "Shell Support")
-[![License](https://custom-icon-badges.demolab.com/static/v1?logoColor=white&labelColor=2C2C2C&label=License&message=MIT&color=00C853&logo=law)](https://github.com/marsdevx/mycode/blob/main/LICENSE "License")
+Project Code CLI (project-code) helps developers manage their code projects efficiently with seamless VS Code integration. Discover, organize, and work with projects across multiple directories with powerful filtering, authentication, and automation features.
 
-</div>
+## ✨ Features
 
----
+- **🔍 Smart Project Discovery** - Automatically find and catalog projects in your directories
+- **📁 Multi-Directory Support** - Organize projects across multiple root folders
+- **⚡ VS Code Integration** - Open projects directly in VS Code with one command
+- **🔐 Git Provider Authentication** - Secure authentication with GitHub, GitLab, and Bitbucket
+- **📦 Project Cloning** - Clone repositories using simple project tags
+- **🏗️ Project Initialization** - Set up new projects with proper structure and templates
+- **🎨 Customizable UI** - Configure display options, themes, and sorting preferences
+- **🔧 Flexible Configuration** - Extensive configuration options for all workflows
+- **📊 Multiple Output Formats** - Table and JSON output for scripting and automation
 
-# 📂 MyCode
+## 🚀 Quick Start
 
-**Mycode** is a **terminal**-based, **cross-platform** application built with **Python**, designed to help developers efficiently **manage** and **organize** their work projects on **macOS** and **Linux**. With a customizable mycoderc config file, this tool brings **clarity**, **automation**, and **speed** to your **development workflow**.
+### Installation
 
-* Organize your **projects** by **groups** using a simple, readable **config file**.
-* Instantly view what **projects** you’ve worked on recently and in what order.
-* Open any project in **Visual Studio Code** directly from the **terminal**—with optional **terminal auto-close**.
-* Store your **GitHub credentials** locally and securely in a **.json** file for quick reuse.
-* Create **new projects** with a single command:
-  - Instantly create a private **GitHub** repo,
-  - **Clone** it to a local folder,
-  - Add **default** **README** and **.gitignore**,
-
-Take control of your dev life with this smart and simple CLI utility that works seamlessly across macOS and Linux!
-
----
-
-## 🖼️ Preview
-
-<div align="center">
-  <img src="imgs/preview1.png" alt="Preview">
-  <img src="imgs/preview2.png" alt="Preview">
-</div>
-
----
-
-## 🛠️ Installation
-
-To install this project, Launch the Terminal app on your system, and run the commands below. <br>
-  - If a pop-up appears prompting you to download the Xcode Command Line Tools after the first command, click “Download” and then run the first command again.
-
-1. **Install mycode**
 ```bash
-brew tap marsdevx/mycode
-brew install mycode
+# Install globally
+npm install -g project-code
+
+# Verify installation
+project-code --version
 ```
 
-2. **Set up mycoderc file**
-> After the first launch of the program, a default configuration file will be created at: `~/.config/mycode/mycoderc`
+### Basic Setup
+
 ```bash
-💾 Configuration File Rules:
-  - `--add <path>`: Adds all subfolders in the specified path to global projects.
-  - `--addspecific <path>`: Adds only the specified folder to global projects.
-  - `--remove <path> --from <path>`: Excludes a specific subfolder from a parent path.
+# Set up your code directory
+mkdir -p ~/code
+project-code config add root ~/code
 
-🔗 Grouping Projects:
-Groups can be defined using `[group:group_name]` syntax in the configuration file.
-  - Group-specific rules:
-      - `--add <path>`: Adds subfolders to the group only.
-      - `--addspecific <path>`: Adds only the specified folder to the group.
-      - `--remove <path> --from <path>`: Excludes a specific subfolder in the group.
-  - Example:
-      [group:example_group]
-      {
-          --add ~/example/path
-          --addspecific ~/example/specific_project
-          --remove ~/example/path/excluded_folder --from ~/example/path
-      }
+# Authenticate with GitHub (optional but recommended)
+project-code auth login --provider github --token YOUR_GITHUB_TOKEN
+
+# Discover your projects
+project-code project list
+
+# Open a project in VS Code
+project-code project open my-project
+
+# Clone a repository
+project-code project clone facebook/react
 ```
 
-3. **Set up Shell Autocompletion**
-> Make sure to add the following to your shell config (e.g. ~/.zshrc or ~/.bashrc):
+**🎉 That's it!** You're ready to manage your projects with Project Code CLI.
+
+## 📚 Documentation
+
+Complete documentation is available in the [`docs/`](docs/) directory:
+
+- **[📖 Init Guide](docs/INIT_GUIDE.md)** - Comprehensive setup walkthrough for new users
+- **[💻 Command Reference](docs/COMMAND_REFERENCE.md)** - Complete documentation of all commands and options
+- **[⚙️ Configuration Guide](docs/CONFIGURATION.md)** - How to configure directories, authentication, and preferences
+- **[💡 Examples](docs/EXAMPLES.md)** - Real-world usage examples and workflows
+- **[🏗️ Directory Structure](docs/DIRECTORY_STRUCTURE.md)** - Directory conventions and hierarchy best practices
+- **[🔐 Authentication](docs/AUTHENTICATION.md)** - Secure GitHub authentication setup
+
+## 🛠️ Commands
+
+### Project Management
+
+| Command | Description |
+|---------|-------------|
+| `project-code project list` | List all discovered projects |
+| `project-code project open <name>` | Open project in VS Code |
+| `project-code project init [path]` | Initialize directory as project |
+| `project-code project clone <repo>` | Clone GitHub repository |
+| `project-code project create <name>` | Create new project |
+
+### Authentication
+
+| Command | Description |
+|---------|-------------|
+| `project-code auth login` | Authenticate with Git provider |
+| `project-code auth logout` | Log out from current provider |
+| `project-code auth status` | Check authentication status |
+
+### Configuration
+
+| Command | Description |
+|---------|-------------|
+| `project-code config list` | Display current configuration |
+| `project-code config add <type> <value>` | Add configuration values |
+| `project-code config set <key> <value>` | Set configuration values |
+| `project-code config reset` | Reset to default configuration |
+
+## 💡 Common Workflows
+
+### Daily Development
+
 ```bash
-autoload -Uz compinit bashcompinit
-compinit
-bashcompinit
+# See all your projects
+project-code project list
 
-eval "$(register-python-argcomplete mycode)"
+# Focus on today's work
+project-code project list --search "urgent|priority"
 
-_mycode() {
-  if (( CURRENT > 2 )) &&
-      [[ ${words[CURRENT-2]} == --create || ${words[CURRENT-2]} == -c ]]; then
-    _files
-    return
-  fi
+# Open main project
+project-code project open my-main-project
 
-  if (( CURRENT > 1 )) &&
-      [[ ${words[CURRENT-1]} == --create || ${words[CURRENT-1]} == -c ]]; then
-    return
-  fi
-
-  _python_argcomplete "$@"
-}
-
-compdef _mycode mycode
+# Clone dependency for reference
+project-code project clone lodash/lodash --vscode
 ```
 
-> Then run:
+### Project Organization
+
 ```bash
-source ~/.zshrc
-or
-source ~/.bashrc
+# Set up organized structure
+mkdir -p ~/code/{web,mobile,api,tools,experiments}
+
+# Configure root folders
+project-code config add root ~/code/web
+project-code config add root ~/code/mobile
+project-code config add root ~/code/api
+
+# Initialize projects in appropriate locations
+project-code project init ~/code/web/my-app --type react
+project-code project init ~/code/api/my-service --type nodejs
 ```
+
+### Team Collaboration
+
+```bash
+# Set up shared project structure
+project-code config add root /shared/team-projects
+
+# Everyone uses same configuration
+cp /shared/team-config.json ~/.project-code/config.json
+
+# Team members see same project list
+project-code project list --format table
+```
+
+## 🔧 Configuration
+
+### Basic Configuration
+
+```bash
+# Set up root directories
+project-code config add root ~/code
+project-code config add root ~/work
+
+# Configure UI preferences
+project-code config set ui.theme dark
+project-code config set ui.sortBy type
+
+# Set default project type
+project-code config set project.defaultType nodejs
+```
+
+### VS Code Integration
+
+```bash
+# Enable VS Code integration
+project-code config set vscode.enabled true
+
+# Set custom VS Code path (if needed)
+project-code config set vscode.executablePath /usr/local/bin/code
+```
+
+## 🔐 Authentication
+
+### GitHub Setup
+
+1. **Create Personal Access Token**:
+   - Go to [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
+   - Generate new token with `repo` scope
+
+2. **Authenticate**:
+   ```bash
+   project-code auth login \
+     --provider github \
+     --token ghp_your_token_here
+   ```
+
+3. **Verify**:
+   ```bash
+   project-code auth status
+   ```
+
+## 📁 Directory Structure
+
+Follow the `~/code` convention for optimal organization:
+
+```
+~/code/
+├── personal/           # Personal projects
+│   ├── websites/       # Personal websites
+│   └── tools/          # Personal utilities
+├── work/               # Work projects
+│   ├── current/        # Active projects
+│   └── clients/        # Client work
+├── experiments/        # Testing & prototypes
+└── archives/           # Completed projects
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](https://github.com/qubitquilt/project-code/blob/main/CONTRIBUTING.md) for details.
+
+- 🐛 **Issues**: [Bug reports and feature requests](https://github.com/qubitquilt/project-code/issues)
+- 💬 **Discussions**: [Questions and discussions](https://github.com/qubitquilt/project-code/discussions)
+- 📖 **Documentation**: Help improve our docs
+- 🧪 **Testing**: Help test new features
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [OCLIF](https://oclif.io/) framework
+- Inspired by the need for better project management tools
+- Thanks to all contributors and supporters
 
 ---
 
-## 🚀 Usage
-
-- `mycode -s all`  
-  Show all global projects defined in your config.
-
-- `mycode -s groups`  
-  Show all available groups and the projects within them.
-
-- `mycode -s <group_name>`  
-  Show all projects in the specified group.
-
-- `mycode <project_name>`  
-  Open the specified project in **Visual Studio Code** and automatically close the terminal.
-
-- `mycode <project_name> -n`  
-  Open the specified project in **VS Code**, but **do not close the terminal**.
-
-- `mycode -c <project_name> <target_dir>`  
-  Create a new local project folder and a **private GitHub repository**, generate default files, and push it to GitHub — all in one command.
-
----
-
-## 📋 License
-
-All the code contained in this repo is licensed under the [MIT License](LICENSE)
-
-```
-MIT License
-
-Copyright (c) 2025 marsdevx
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
----
-
-## ⭐ Support
-
-If you like this project, don’t forget to ⭐ **star** it and **follow** me!  
-Your **support** helps me create more projects. 🚀  
-
-🔗 **Explore more of my work on [GitHub](https://github.com/marsdevx?tab=repositories) and discover other exciting projects!**
+**Made with ❤️ for developers who love efficient workflows**
