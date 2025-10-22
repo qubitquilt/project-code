@@ -42,8 +42,8 @@ Project Code CLI supports authentication with multiple Git providers to enable f
 | Provider | Status | Token Type | Setup Complexity |
 |----------|--------|------------|------------------|
 | GitHub | ✅ Supported | Personal Access Token | Low |
-| GitLab | ⚠️ Planned | Personal Access Token | Medium |
-| Bitbucket | ⚠️ Planned | App Password | Medium |
+| GitLab | ✅ Supported | Personal Access Token | Medium |
+| Bitbucket | ✅ Supported | App Password | Medium |
 | Local | ✅ Supported | None required | None |
 
 ---
@@ -127,50 +127,156 @@ workflow
 
 ## GitLab Authentication
 
-> ⚠️ **Note**: GitLab authentication is planned for a future release.
+### Step 1: Create Personal Access Token
 
-### Token Setup (When Available)
+1. **Navigate to GitLab Settings**:
+    - Go to [GitLab.com](https://gitlab.com)
+    - Click your profile picture → **Preferences**
 
-1. **Create Personal Access Token**:
-   - Go to [GitLab Preferences > Access Tokens](https://gitlab.com/-/profile/personal_access_tokens)
-   - Create token with appropriate scopes
+2. **Access Access Tokens**:
+    - Scroll down and click **Access Tokens**
+    - Click **Create personal access token**
 
-2. **Authenticate with CLI**:
-   ```bash
-   project-code auth login \
-     --provider gitlab \
-     --token glpat-your_token_here
-   ```
+3. **Configure Token**:
+    - Give it a descriptive name: `Project Code CLI`
+    - Set expiration: **90 days** (recommended)
+    - Select appropriate scopes
 
-### Required Scopes
+4. **Generate and Copy Token**:
+    - Click **Create personal access token**
+    - **Immediately copy the token** (you won't see it again!)
 
-- `read_repository`
-- `write_repository`
-- `api`
+### Step 2: Authenticate with CLI
+
+```bash
+# Authenticate with GitLab
+project-code auth login \
+  --provider gitlab \
+  --token glpat-your_token_here
+
+# Optional: Add username for clarity
+project-code auth login \
+  --provider gitlab \
+  --token glpat-your_token_here \
+  --username your-gitlab-username
+```
+
+### Step 3: Verify Authentication
+
+```bash
+# Check authentication status
+project-code auth status
+
+# Test with a private repository clone
+project-code project clone your-username/private-repo
+```
+
+### GitLab Token Scopes Explained
+
+| Scope | Purpose | Required for Project Code |
+|-------|---------|------------------------|
+| `read_repository` | Read repository contents | ✅ Required |
+| `write_repository` | Push to repositories | ✅ Required |
+| `api` | Access GitLab API | ✅ Required |
+| `read_user` | Read user profile | ❌ Optional |
+| `read_registry` | Access container registry | ❌ Optional |
+
+**Minimal Required Scopes:**
+```bash
+# For basic repository access only
+read_repository
+write_repository
+api
+```
+
+**Recommended Scopes:**
+```bash
+# For full Project Code functionality
+read_repository
+write_repository
+api
+read_user
+```
 
 ---
 
 ## Bitbucket Authentication
 
-> ⚠️ **Note**: Bitbucket authentication is planned for a future release.
+### Step 1: Create App Password
 
-### App Password Setup (When Available)
+1. **Navigate to Bitbucket Settings**:
+    - Go to [Bitbucket.org](https://bitbucket.org)
+    - Click your profile picture → **Personal Bitbucket Settings**
 
-1. **Create App Password**:
-   - Go to [Bitbucket Settings > App passwords](https://bitbucket.org/account/settings/app-passwords/)
-   - Create new App password
+2. **Access App Passwords**:
+    - Click **App passwords** in the left sidebar
+    - Click **Create App password**
 
-2. **Configure Permissions**:
-   - ✅ **Repositories**: Read and Write
-   - ✅ **Projects**: Read
-   - ❌ **Issues**: Not required for basic usage
+3. **Configure App Password**:
+    - Give it a descriptive name: `Project Code CLI`
+    - Set expiration: **90 days** (recommended)
 
-3. **Authenticate with CLI**:
-   ```bash
-   project-code auth login \
-     --provider bitbucket \
-     --token your_app_password_here
-   ```
+4. **Set Permissions**:
+    - ✅ **Repositories**: Read and Write
+    - ✅ **Projects**: Read
+    - ✅ **Pull requests**: Read and Write
+    - ❌ **Issues**: Not required for basic usage
+    - ❌ **Snippets**: Not required for basic usage
+
+5. **Generate and Copy Password**:
+    - Click **Create**
+    - **Immediately copy the password** (you won't see it again!)
+
+### Step 2: Authenticate with CLI
+
+```bash
+# Authenticate with Bitbucket
+project-code auth login \
+  --provider bitbucket \
+  --token your_app_password_here
+
+# Optional: Add username for clarity
+project-code auth login \
+  --provider bitbucket \
+  --token your_app_password_here \
+  --username your-bitbucket-username
+```
+
+### Step 3: Verify Authentication
+
+```bash
+# Check authentication status
+project-code auth status
+
+# Test with a private repository clone
+project-code project clone your-workspace/private-repo
+```
+
+### Bitbucket App Password Permissions Explained
+
+| Permission | Purpose | Required for Project Code |
+|------------|---------|------------------------|
+| **Repositories** | Read/write repository access | ✅ Required |
+| **Projects** | Read project information | ✅ Required |
+| **Pull requests** | Access PR functionality | ✅ Recommended |
+| **Issues** | Access issue tracking | ❌ Optional |
+| **Snippets** | Access code snippets | ❌ Optional |
+| **Wiki** | Access wiki pages | ❌ Optional |
+
+**Minimal Required Permissions:**
+```bash
+# For basic repository access only
+Repositories: Read and Write
+Projects: Read
+```
+
+**Recommended Permissions:**
+```bash
+# For full Project Code functionality
+Repositories: Read and Write
+Projects: Read
+Pull requests: Read and Write
+```
 
 ---
 
