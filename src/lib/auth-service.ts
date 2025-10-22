@@ -262,6 +262,26 @@ export class AuthService {
   private async loadAuthStatusFromStorage(): Promise<AuthStatus> {
     const providers: AuthProvider[] = ['github', 'gitlab', 'bitbucket', 'local']
 
+    // First, try to load using the current auth status username if available
+    if (this.currentAuthStatus?.username && this.currentAuthStatus.username !== 'default' && this.currentAuthStatus.provider) {
+      const storedData = await this.secureStorage.getAuthData(this.currentAuthStatus.provider, this.currentAuthStatus.username)
+      if (storedData.success && storedData.data) {
+        const tokens: AuthTokens = JSON.parse(storedData.data.encryptedTokens)
+
+        this.currentAuthStatus = {
+          expiresAt: tokens.expiresAt,
+          isAuthenticated: true,
+          lastValidated: new Date(),
+          provider: this.currentAuthStatus.provider,
+          scope: tokens.scope,
+          username: storedData.data.username,
+        }
+
+        return {...this.currentAuthStatus}
+      }
+    }
+
+    // Fallback to checking all providers with 'default' username for backward compatibility
     const authChecks = providers.map((provider) => this.secureStorage.getAuthData(provider, 'default'))
 
     const results = await Promise.all(authChecks)

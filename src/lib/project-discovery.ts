@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync , statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 import {
@@ -9,6 +9,7 @@ import {
   ProjectType,
 } from '../types/index.js';
 import { ConfigManager } from './config.js';
+
 
 
 /**
@@ -210,13 +211,13 @@ export class ProjectDiscoveryService {
     const relativePath = relative(process.cwd(), directoryPath);
 
     // Get directory stats
-    let size = 0;
-    let fileCount = 0;
+    const size = 0;
+    const fileCount = 0;
 
     try {
-      const stats = this.getDirectoryStats(directoryPath);
-      size = stats.size;
-      fileCount = stats.fileCount;
+      // const stats = this.getDirectoryStats(directoryPath);
+      // size = stats.size;
+      // fileCount = stats.fileCount;
     } catch {
       // If we can't get stats, continue with zero values
     }
@@ -369,16 +370,16 @@ export class ProjectDiscoveryService {
 
     const scan = (currentPath: string) => {
       try {
-        const entries = readdirSync(currentPath);
+        const entries = readdirSync(currentPath, { withFileTypes: true });
 
         for (const entry of entries) {
-          const entryPath = join(currentPath, entry);
-          const stat = statSync(entryPath);
+          const entryPath = join(currentPath, entry.name);
 
-          if (stat.isFile()) {
+          if (entry.isFile()) {
+            const stat = statSync(entryPath);
             size += stat.size;
             fileCount++;
-          } else if (stat.isDirectory() && !entry.startsWith('.') && entry !== 'node_modules' && entry !== 'dist' && entry !== 'build') {
+          } else if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules' && entry.name !== 'dist' && entry.name !== 'build') {
             scan(entryPath);
           }
         }
@@ -494,33 +495,23 @@ export class ProjectDiscoveryService {
         return projects;
       }
 
-      const entries = readdirSync(currentPath);
-      const files = entries.filter(entry => {
-        const entryPath = join(currentPath, entry);
-        const stat = statSync(entryPath);
-
-        if (stat.isDirectory()) {
-          // Check if directory should be excluded
-          return !this.shouldExclude(entryPath, excludePatterns);
-        }
-
-        return stat.isFile();
-      });
+      const entries = readdirSync(currentPath, { withFileTypes: true });
+      const files = entries.filter(entry => entry.isFile() && !this.shouldExclude(join(currentPath, entry.name), excludePatterns));
 
       // Check if this directory contains a project
-      const projectInfo = await this.analyzeDirectory(currentPath, files);
+      const projectInfo = await this.analyzeDirectory(currentPath, files.map(f => f.name));
       if (projectInfo) {
         projects.push(projectInfo);
       }
 
       // Recursively scan subdirectories
       const directories = entries.filter(entry => {
-        const entryPath = join(currentPath, entry);
-        return statSync(entryPath).isDirectory() && !this.shouldExclude(entryPath, excludePatterns);
+        const entryPath = join(currentPath, entry.name);
+        return entry.isDirectory() && !this.shouldExclude(entryPath, excludePatterns);
       });
 
       const subDirPromises = directories.map(directory => {
-        const subPath = join(currentPath, directory);
+        const subPath = join(currentPath, directory.name);
         return this.scanDirectory(
           rootPath,
           subPath,
@@ -549,7 +540,13 @@ export class ProjectDiscoveryService {
    */
   private shouldExclude(path: string, excludePatterns: string[]): boolean {
     return excludePatterns.some(pattern => {
-      const regex = new RegExp(pattern.replaceAll('**', '.*').replaceAll('*', '[^/]*'));
+      // Convert glob pattern to regex properly
+      const regexPattern = pattern
+        .replaceAll('**', '___DOUBLE_STAR___')  // Temporarily replace ** with placeholder
+        .replaceAll('*', '[^/]*')               // Replace * with [^/]*
+        .replaceAll('___DOUBLE_STAR___', '.*')  // Replace placeholder with .*
+        .replaceAll(/[.+?^${}()|[\]\\]/g, (match) => `\\${match}`); // Escape special regex characters
+      const regex = new RegExp(`^${regexPattern}$`);
       return regex.test(path);
     });
   }
