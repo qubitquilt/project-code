@@ -15,6 +15,45 @@ import {
 import { SecureStorage } from './secure-storage.js';
 
 /**
+ * Progress callback for UI updates during authentication
+ */
+export interface AuthProgressCallback {
+  (progress: AuthProgressInfo): void;
+}
+
+/**
+ * Progress information for UI feedback
+ */
+export interface AuthProgressInfo {
+  currentStep: AuthProgressStep;
+  details?: string[];
+  error?: string;
+  message: string;
+  percentage?: number;
+}
+
+/**
+ * Authentication progress steps
+ */
+export type AuthProgressStep =
+  | 'completing'
+  | 'error'
+  | 'initializing'
+  | 'storing-tokens'
+  | 'success'
+  | 'validating-format'
+  | 'validating-provider';
+
+/**
+ * UI interaction options for authentication
+ */
+export interface AuthUIOptions {
+  enableProgressReporting?: boolean;
+  onProgress?: AuthProgressCallback;
+  suppressConsoleOutput?: boolean;
+}
+
+/**
  * Utility function to make HTTP requests using Node.js built-in https module
  */
 async function makeHttpRequest(url: string, options: { body?: string; headers?: Record<string, string>; method?: string } = {}): Promise<{ data: string; status: number }> {
@@ -73,14 +112,38 @@ export class AuthService {
   /**
    * Authenticate with a provider using credentials
    */
-  async authenticate(provider: AuthProvider, credentials: AuthCredentials): Promise<SecureStorageResult<AuthTokens>> {
+  async authenticate(provider: AuthProvider, credentials: AuthCredentials, uiOptions: AuthUIOptions = {}): Promise<SecureStorageResult<AuthTokens>> {
     try {
-      console.log(`🔐 Starting authentication for ${provider}...`)
-      console.log(`📝 Token provided: ${credentials.personalAccessToken?.slice(0, 10)}...`)
+      let currentStep: AuthProgressStep = 'initializing';
+      
+      if (!uiOptions.suppressConsoleOutput) {
+        console.log(`🔐 Starting authentication for ${provider}...`)
+      }
+      
+      if (uiOptions.enableProgressReporting) {
+        uiOptions.onProgress?.(
+          { 
+            currentStep: 'initializing', 
+            message: 'Initializing authentication...', 
+            percentage: 0
+          } as AuthProgressInfo
+        )
+      }
 
       // Local provider doesn't require a token
       if (provider !== 'local' && !credentials.personalAccessToken) {
-        console.log(`❌ No token provided for ${provider}`)
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`❌ No token provided for ${provider}`)
+        }
+        
+        if (uiOptions.enableProgressReporting) {
+          uiOptions.onProgress?.({
+            currentStep: 'error',
+            error: 'Personal access token is required',
+            message: 'Personal access token is required',
+          } as AuthProgressInfo)
+        }
+        
         return {
           error: 'Personal access token is required',
           success: false,
@@ -89,25 +152,89 @@ export class AuthService {
 
       // For local provider, skip token validation
       if (provider === 'local') {
-        console.log(`✅ Local provider - skipping token validation`)
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`✅ Local provider - skipping token validation`)
+        }
+
+        currentStep = 'validating-format'
+        
+        if (uiOptions.enableProgressReporting) {
+          uiOptions.onProgress?.({
+            currentStep: 'validating-format',
+            message: 'Skipping token validation for local provider',
+            percentage: 10
+          } as AuthProgressInfo)
+        }
       } else {
         // Validate token format for the provider
-        console.log(`🔍 Validating token format for ${provider}...`)
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`🔍 Validating token format for ${provider}...`)
+        }
+        
+        currentStep = 'validating-format'
+        
+        if (uiOptions.enableProgressReporting) {
+          uiOptions.onProgress?.({
+            currentStep: 'validating-format',
+            message: 'Validating token format',
+            percentage: 10
+          } as AuthProgressInfo)
+        }
+
         const formatValidation = this.validateTokenFormat(provider, credentials.personalAccessToken!)
-        console.log(`📊 Format validation result: ${JSON.stringify(formatValidation)}`)
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`📊 Format validation result: ${JSON.stringify(formatValidation)}`)
+        }
+        
         if (!formatValidation.valid) {
-          console.log(`❌ Token format validation failed: ${formatValidation.error}`)
+          if (!uiOptions.suppressConsoleOutput) {
+            console.log(`❌ Token format validation failed: ${formatValidation.error}`)
+          }
+
+          currentStep = 'error'
+          
+          if (uiOptions.enableProgressReporting) {
+            uiOptions.onProgress?.({
+              currentStep: 'error',
+              error: formatValidation.error,
+              message: 'Token format validation failed',
+            } as AuthProgressInfo)
+          }
+
           return {
             error: formatValidation.error,
             success: false,
           }
         }
 
-        console.log(`✅ Token format validation successful`)
+        currentStep = 'validating-provider'
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`✅ Token format validation successful`)
+        }
+        
+        if (uiOptions.enableProgressReporting) {
+          uiOptions.onProgress?.({
+            currentStep: 'validating-provider',
+            message: 'Token format validated, validating provider',
+            percentage: 20
+          } as AuthProgressInfo)
+        }
 
         // Test with invalid token to see if validation works
         if (credentials.personalAccessToken === 'invalid-token') {
-          console.log(`🧪 Testing with invalid token - should fail!`)
+          if (!uiOptions.suppressConsoleOutput) {
+            console.log(`🧪 Testing with invalid token - should fail!`)
+          }
+          
+          if (uiOptions.enableProgressReporting) {
+            uiOptions.onProgress?.({
+              currentStep: 'error',
+              error: 'Failed token validation (testing purposes)',
+              message: 'Testing invalid token',
+            } as AuthProgressInfo)
+          }
+
+          currentStep = 'error'
           return {
             error: 'Test: Invalid token detected',
             success: false,
@@ -115,12 +242,39 @@ export class AuthService {
         }
 
         // Validate token with provider API
-        console.log(`🔍 Validating token with ${provider} API...`)
-        const validationResult = await this.validateTokenWithProvider(provider, credentials.personalAccessToken!)
-        console.log(`📊 API validation result: ${JSON.stringify(validationResult)}`)
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`🔍 Validating token with ${provider} API...`)
+        }
 
+        currentStep = 'validating-provider'
+        
+        if (uiOptions.enableProgressReporting) {
+          uiOptions.onProgress?.({
+            currentStep: 'validating-provider',
+            message: ' Validating token with provider API',
+            percentage: 30
+          } as AuthProgressInfo)
+        }
+
+        const validationResult = await this.validateTokenWithProvider(provider, credentials.personalAccessToken!)
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`📊 API validation result: ${JSON.stringify(validationResult)}`)
+        }
+        
         if (!validationResult.success) {
-          console.log(`❌ API validation failed: ${validationResult.error}`)
+          if (!uiOptions.suppressConsoleOutput) {
+            console.log(`❌ API validation failed: ${validationResult.error}`)
+          }
+          
+          if (uiOptions.enableProgressReporting) {
+            uiOptions.onProgress?.({
+              currentStep: 'error',
+              error: validationResult.error || 'Token validation failed',
+              message: 'Provider API validation failed',
+            } as AuthProgressInfo)
+          }
+
+          currentStep = 'error'
           return {
             error: validationResult.error || 'Token validation failed',
             success: false,
@@ -129,7 +283,20 @@ export class AuthService {
       }
 
       // Create tokens from credentials
-      console.log(`🔐 Creating tokens and storing authentication...`)
+      if (!uiOptions.suppressConsoleOutput) {
+        console.log(`🔐 Creating tokens and storing authentication...`)
+      }
+
+      currentStep = 'storing-tokens'
+      
+      if (uiOptions.enableProgressReporting) {
+        uiOptions.onProgress?.({
+          currentStep: 'storing-tokens',
+          message: 'Validating completed, storing tokens',
+          percentage: 60
+        } as AuthProgressInfo)
+      }
+
       const tokens: AuthTokens = {
         accessToken: provider === 'local' ? 'local-auth' : credentials.personalAccessToken!,
         scope: provider === 'local' ? [] : this.getDefaultScope(provider),
@@ -144,7 +311,19 @@ export class AuthService {
       )
 
       if (!storageResult.success) {
-        console.log(`❌ Failed to store tokens: ${storageResult.error}`)
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`❌ Failed to store tokens: ${storageResult.error}`)
+        }
+        
+        if (uiOptions.enableProgressReporting) {
+          uiOptions.onProgress?.({
+            currentStep: 'error',
+            error: storageResult.error,
+            message: 'Error storing tokens',
+          } as AuthProgressInfo)
+        }
+
+        currentStep = 'error'
         return {
           error: `Failed to store tokens: ${storageResult.error}`,
           success: false,
@@ -161,13 +340,59 @@ export class AuthService {
         username: credentials.username,
       }
 
-      console.log(`✅ Authentication completed successfully`)
+      if (!uiOptions.suppressConsoleOutput) {
+        console.log(`✅ Authentication completed successfully`)
+      }
+
+      currentStep = 'success'
+      console.log(currentStep)
+      
+      if (uiOptions.enableProgressReporting) {
+        uiOptions.onProgress?.({
+          currentStep: 'success',
+          message: 'Authentication successful!',
+          percentage: 100
+        } as AuthProgressInfo)
+      }
+
+      if (!uiOptions.suppressConsoleOutput) {
+        console.log(`✅ Authentication completed successfully`)
+      }
+
       return {
         data: tokens,
         success: true,
       }
     } catch (error) {
-      console.log(`❌ Authentication error: ${error}`)
+      if (error instanceof Error) {
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`❌ Authentication error: ${error.message}`)
+        }
+        
+        if (uiOptions.enableProgressReporting) {
+          uiOptions.onProgress?.({
+            currentStep: 'error',
+            error: error.message,
+            message: 'An error occurred',
+          } as AuthProgressInfo)
+        }
+      } else {
+        if (!uiOptions.suppressConsoleOutput) {
+          console.log(`❌ Authentication error: ${error}`)
+        }
+        
+        if (uiOptions.enableProgressReporting) {
+          uiOptions.onProgress?.({
+            currentStep: 'error',
+            error: String(error),
+            message: 'An error occurred',
+          } as AuthProgressInfo)
+        }
+      }
+
+      const currentStep = 'error'
+      console.log(currentStep)
+
       return {
         error: error instanceof Error ? error.message : 'Authentication failed',
         success: false,

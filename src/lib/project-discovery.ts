@@ -2,6 +2,9 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 import {
+  GitignoreMatchResult,
+  GitignoreOptions,
+  GitignorePattern,
   HierarchyDisplayOptions,
   ProjectDiscoveryOptions,
   ProjectHierarchyNode,
@@ -9,6 +12,8 @@ import {
   ProjectType,
 } from '../types/index.js';
 import { ConfigManager } from './config.js';
+import { getDefaultCache } from './gitignore-cache.js';
+import { GitignoreParser } from './gitignore-parser.js';
 
 
 
@@ -90,6 +95,7 @@ export class ProjectDiscoveryService {
     const excludePatterns = options?.excludePatterns || config.project?.excludePatterns || [];
     const includePatterns = options?.includePatterns || config.project?.includePatterns || [];
     const supportedTypes = options?.supportedTypes || config.project?.supportedTypes || [];
+    const gitignoreOptions = options?.gitignore || config.project?.gitignore;
 
     const projects: ProjectInfo[] = [];
 
@@ -103,7 +109,8 @@ export class ProjectDiscoveryService {
           maxDepth,
           excludePatterns,
           includePatterns,
-          supportedTypes
+          supportedTypes,
+          gitignoreOptions as GitignoreOptions
         )
       );
 
@@ -240,6 +247,44 @@ export class ProjectDiscoveryService {
   }
 
   /**
+   * Check if path is excluded by gitignore patterns
+   */
+  private checkGitignore(path: string, gitignoreOptions: GitignoreOptions): GitignoreMatchResult {
+    if (!gitignoreOptions.enabled) {
+      return { excluded: false };
+    }
+
+    const cacheManager = getDefaultCache(gitignoreOptions);
+
+    // Find all .gitignore files in the directory tree
+    const gitignorePaths = GitignoreParser.findGitignoreFiles(path, 10);
+
+    if (gitignorePaths.length === 0) {
+      return { excluded: false };
+    }
+
+    // Parse and cache gitignore files
+    const allPatterns: GitignorePattern[] = [];
+    for (const gitignorePath of gitignorePaths) {
+      let gitignoreFile = cacheManager.get(gitignorePath);
+
+      if (!gitignoreFile) {
+        gitignoreFile = GitignoreParser.parseGitignoreFile(gitignorePath);
+        if (!gitignoreFile.error) {
+          cacheManager.set(gitignorePath, gitignoreFile);
+        }
+      }
+
+      if (gitignoreFile && !gitignoreFile.error) {
+        allPatterns.push(...gitignoreFile.patterns);
+      }
+    }
+
+    // Match the path against all patterns
+    return GitignoreParser.matchPath(path, allPatterns, gitignoreOptions);
+  }
+
+  /**
    * Determine Java project type based on file patterns
    */
   private determineJavaProjectType(fileNames: string[]): ProjectType {
@@ -273,6 +318,7 @@ export class ProjectDiscoveryService {
       return 'javascript';
     }
   }
+
 
   /**
    * Get project type based on file patterns
@@ -347,7 +393,6 @@ export class ProjectDiscoveryService {
 
     return 'unknown';
   }
-
 
   /**
    * Helper method to recursively flatten a hierarchy node
@@ -431,6 +476,23 @@ export class ProjectDiscoveryService {
   }
 
   /**
+   * Convert glob pattern to regex pattern
+   */
+  private globToRegex(pattern: string): string {
+    // Escape special regex characters except our wildcards
+    let regex = pattern.replaceAll(/[.+^${}()|[\]\\]/g, String.raw`\$&`);
+
+    // Handle ** (match any number of path segments)
+    regex = regex.replaceAll('**', '.*');
+
+    // Handle * (match any characters except /)
+    regex = regex.replaceAll('*', '[^/]*');
+
+    // Add anchors for full path matching
+    return `^${regex}$`;
+  }
+
+  /**
    * Check if directory has project indicators
    */
   private hasProjectIndicators(files: string[]): boolean {
@@ -482,7 +544,8 @@ export class ProjectDiscoveryService {
     maxDepth: number,
     excludePatterns: string[],
     includePatterns: string[],
-    supportedTypes: ProjectType[]
+    supportedTypes: ProjectType[],
+    gitignoreOptions?: GitignoreOptions
   ): Promise<ProjectInfo[]> {
     const projects: ProjectInfo[] = [];
 
@@ -507,7 +570,7 @@ export class ProjectDiscoveryService {
       // Recursively scan subdirectories
       const directories = entries.filter(entry => {
         const entryPath = join(currentPath, entry.name);
-        return entry.isDirectory() && !this.shouldExclude(entryPath, excludePatterns);
+        return entry.isDirectory() && !this.shouldExcludeDirectory(entryPath, excludePatterns, gitignoreOptions);
       });
 
       const subDirPromises = directories.map(directory => {
@@ -519,7 +582,8 @@ export class ProjectDiscoveryService {
           maxDepth,
           excludePatterns,
           includePatterns,
-          supportedTypes
+          supportedTypes,
+          gitignoreOptions
         );
       });
 
@@ -539,15 +603,46 @@ export class ProjectDiscoveryService {
    * Check if path should be excluded based on patterns
    */
   private shouldExclude(path: string, excludePatterns: string[]): boolean {
-    return excludePatterns.some(pattern => {
-      // Convert glob pattern to regex properly
-      const regexPattern = pattern
-        .replaceAll('**', '___DOUBLE_STAR___')  // Temporarily replace ** with placeholder
-        .replaceAll('*', '[^/]*')               // Replace * with [^/]*
-        .replaceAll('___DOUBLE_STAR___', '.*')  // Replace placeholder with .*
-        .replaceAll(/[.+?^${}()|[\]\\]/g, (match) => `\\${match}`); // Escape special regex characters
-      const regex = new RegExp(`^${regexPattern}$`);
-      return regex.test(path);
-    });
+    // Normalize path separators
+    const normalizedPath = path.replaceAll('\\', '/');
+
+    for (const pattern of excludePatterns) {
+      // Convert glob pattern to regex and test
+      const regexPattern = this.globToRegex(pattern);
+      const regex = new RegExp(regexPattern);
+
+      if (regex.test(normalizedPath)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if directory path should be excluded based on patterns and gitignore
+   */
+  private shouldExcludeDirectory(path: string, excludePatterns: string[], gitignoreOptions?: GitignoreOptions): boolean {
+    // Check default exclusions first
+    const dirName = path.split(sep).pop() || '';
+    const defaultExclusions = ['node_modules', '.git', 'dist', 'build', '.next', '.nuxt', 'coverage', '.nyc_output', 'target', 'bin', 'obj'];
+    if (defaultExclusions.includes(dirName) || dirName.startsWith('.')) {
+      return true;
+    }
+
+    // First check config exclude patterns
+    if (this.shouldExclude(path, excludePatterns)) {
+      return true;
+    }
+
+    // Then check gitignore patterns if enabled
+    if (gitignoreOptions?.enabled) {
+      const gitignoreResult = this.checkGitignore(path, gitignoreOptions);
+      if (gitignoreResult.excluded) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

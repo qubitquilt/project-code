@@ -45,7 +45,7 @@ project-code --version
 ```bash
 # Set up your code directory
 mkdir -p ~/code
-project-code config add root ~/code
+project-code config add root-folder ~/code
 
 # Authenticate with GitHub (optional but recommended)
 project-code auth login --provider github --token YOUR_GITHUB_TOKEN

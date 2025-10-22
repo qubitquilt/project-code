@@ -263,6 +263,15 @@ export class ConfigManager {
           '**/tmp/**',
           '**/temp/**',
         ],
+        gitignore: {
+          cacheSize: 100,
+          cacheTTL: 300_000, // 5 minutes
+          enabled: true,
+          includeGlobal: true,
+          maxTraversalDepth: 10,
+          priority: 'merge',
+          strictMode: false,
+        },
         includePatterns: [
           '**/*.js',
           '**/*.ts',

@@ -646,4 +646,4 @@ Configuration can be overridden with environment variables:
 
 ---
 
-*For more examples and workflows, see [Examples Documentation](EXAMPLES.md).*
+*For more examples and workflows, see [Examples Documentation](EXAMPLES.md).*/

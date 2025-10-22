@@ -1,9 +1,10 @@
 import {Command, Flags} from '@oclif/core'
+import { relative } from 'node:path'
 
 import {ConfigManager} from '../../lib/config.js'
 import {ProjectDiscoveryService} from '../../lib/project-discovery.js'
 import {VSCodeService} from '../../lib/vscode-service.js'
-import {HierarchyDisplayOptions, ProjectHierarchyNode, ProjectInfo, ProjectType, ProjectCodeConfig} from '../../types/index.js'
+import {HierarchyDisplayOptions, ProjectCodeConfig, ProjectHierarchyNode, ProjectInfo, ProjectType} from '../../types/index.js'
 
 /**
  * List discovered projects
@@ -235,35 +236,30 @@ static flags = {
     const levelWidth = 5
     const nameWidth = Math.max(...projects.map((p) => p.name.length), 4)
     const typeWidth = Math.max(...projects.map((p) => p.type.length), 4)
-    const pathWidth = Math.min(40, Math.max(...projects.map((p) => (p.relativePath || p.path).length), 4))
+    const pathWidth = Math.min(40, Math.max(...projects.map((p) => this.getRelativePath(p.path).length), 4))
 
     // Header
-    this.log(''.padEnd(levelWidth + nameWidth + typeWidth + pathWidth + 15, '─'))
-    const headerFormat = `%-${levelWidth}s %-${nameWidth}s %-${typeWidth}s %-${pathWidth}s %s`
-    this.log(headerFormat.replaceAll('s ', 's │ '), 'Level', 'Name', 'Type', 'Path', showDescriptions ? 'Description' : '')
-    this.log(''.padEnd(levelWidth + nameWidth + typeWidth + pathWidth + 15, '─'))
+    const totalWidth = levelWidth + nameWidth + typeWidth + pathWidth + (showDescriptions ? 15 : 0) + 12 // 12 for separators
+    this.log(''.padEnd(totalWidth, '─'))
+    const header = `${'Level'.padEnd(levelWidth)} │ ${'Name'.padEnd(nameWidth)} │ ${'Type'.padEnd(typeWidth)} │ ${'Path'.padEnd(pathWidth)}${showDescriptions ? ' │ Description' : ''}`
+    this.log(header)
+    this.log(''.padEnd(totalWidth, '─'))
 
     // Rows
     for (const project of projects) {
-      const relativePath = project.relativePath || project.path
+      const relativePath = this.getRelativePath(project.path)
       const truncatedPath = relativePath.length > pathWidth ? '...' + relativePath.slice(-(pathWidth - 3)) : relativePath
 
-      const rowFormat = `%-${levelWidth}s %-${nameWidth}s %-${typeWidth}s %-${pathWidth}s`
-      const basicInfo = rowFormat.replaceAll('s ', 's │ ')
-
-      if (showDescriptions && project.description) {
-        this.log(`${basicInfo} ${project.description}`, '0', project.name, project.type, truncatedPath)
-      } else {
-        this.log(basicInfo, '0', project.name, project.type, truncatedPath)
-      }
+      const row = `${'0'.padEnd(levelWidth)} │ ${project.name.padEnd(nameWidth)} │ ${project.type.padEnd(typeWidth)} │ ${truncatedPath.padEnd(pathWidth)}${showDescriptions && project.description ? ` │ ${project.description}` : ''}`
+      this.log(row)
 
       // Show tags if enabled and available
       if (showTags && project.tags && project.tags.length > 0) {
-        this.log(`     │     │     │     │     🏷️  ${project.tags.join(', ')}`)
+        this.log(`${''.padEnd(levelWidth)}   ${''.padEnd(nameWidth)}   ${''.padEnd(typeWidth)}   ${''.padEnd(pathWidth)}   🏷️  ${project.tags.join(', ')}`)
       }
     }
 
-    this.log(''.padEnd(levelWidth + nameWidth + typeWidth + pathWidth + 15, '─'))
+    this.log(''.padEnd(totalWidth, '─'))
     this.log(`Total: ${projects.length} projects`)
   }
 
@@ -290,46 +286,41 @@ static flags = {
   /**
    * Display projects in table format
    */
-   private displayProjectsTable(projects: ProjectInfo[], config: ProjectCodeConfig): void {
-      const showDescriptions = config?.ui?.showDescriptions !== false
-      const showTags = config?.ui?.showTags !== false
+  private displayProjectsTable(projects: ProjectInfo[], config: ProjectCodeConfig): void {
+    const showDescriptions = config?.ui?.showDescriptions !== false
+    const showTags = config?.ui?.showTags !== false
 
     // Calculate column widths
     const nameWidth = Math.max(...projects.map((p) => p.name.length), 4)
     const typeWidth = Math.max(...projects.map((p) => p.type.length), 4)
-    const pathWidth = Math.min(60, Math.max(...projects.map((p) => (p.relativePath || p.path).length), 4))
+    const pathWidth = Math.min(60, Math.max(...projects.map((p) => this.getRelativePath(p.path).length), 4))
 
     // Header
     this.log('')
     this.log('📁 Projects')
-    this.log(''.padEnd(nameWidth + typeWidth + pathWidth + 10, '─'))
+    const totalWidth = nameWidth + typeWidth + pathWidth + (showDescriptions ? 15 : 0) + 6 // 6 for separators
+    this.log(''.padEnd(totalWidth, '─'))
 
-    const headerFormat = `%-${nameWidth}s %-${typeWidth}s %-${pathWidth}s %s`
-    this.log(headerFormat.replaceAll('s ', 's │ '), 'Name', 'Type', 'Path', showDescriptions ? 'Description' : '')
-    this.log(''.padEnd(nameWidth + typeWidth + pathWidth + 10, '─'))
+    const header = `${'Name'.padEnd(nameWidth)} │ ${'Type'.padEnd(typeWidth)} │ ${'Path'.padEnd(pathWidth)}${showDescriptions ? ' │ Description' : ''}`
+    this.log(header)
+    this.log(''.padEnd(totalWidth, '─'))
 
     // Rows
     for (const project of projects) {
-      const relativePath = project.relativePath || project.path
+      const relativePath = this.getRelativePath(project.path)
       const truncatedPath =
         relativePath.length > pathWidth ? '...' + relativePath.slice(-(pathWidth - 3)) : relativePath
 
-      const rowFormat = `%-${nameWidth}s %-${typeWidth}s %-${pathWidth}s`
-      const basicInfo = rowFormat.replaceAll('s ', 's │ ')
-
-      if (showDescriptions && project.description) {
-        this.log(`${basicInfo} ${project.description}`, project.name, project.type, truncatedPath)
-      } else {
-        this.log(basicInfo, project.name, project.type, truncatedPath)
-      }
+      const row = `${project.name.padEnd(nameWidth)} │ ${project.type.padEnd(typeWidth)} │ ${truncatedPath.padEnd(pathWidth)}${showDescriptions && project.description ? ` │ ${project.description}` : ''}`
+      this.log(row)
 
       // Show tags if enabled and available
       if (showTags && project.tags && project.tags.length > 0) {
-        this.log(`   🏷️  ${project.tags.join(', ')}`)
+        this.log(`${''.padEnd(nameWidth)}   ${''.padEnd(typeWidth)}   ${''.padEnd(pathWidth)}   🏷️  ${project.tags.join(', ')}`)
       }
     }
 
-    this.log(''.padEnd(nameWidth + typeWidth + pathWidth + 10, '─'))
+    this.log(''.padEnd(totalWidth, '─'))
     this.log(`Total: ${projects.length} projects`)
   }
 
@@ -409,6 +400,13 @@ static flags = {
     for (const child of children) {
       this.flattenHierarchy(child, result)
     }
+  }
+
+  /**
+   * Get relative path from user's home directory
+   */
+  private getRelativePath(absolutePath: string): string {
+    return relative(process.env.HOME || '', absolutePath)
   }
 
   /**

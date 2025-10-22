@@ -249,8 +249,8 @@ export class DirectoryManager {
   }
 
   /**
-    * Get directory size information
-    */
+   * Get directory size information
+   */
    async getDirectoryInfo(path: string): Promise<CommandResult<{ fileCount: number; path: string; size: number; }>> {
     try {
       const absolutePath = resolve(path);
@@ -289,8 +289,8 @@ export class DirectoryManager {
   }
 
   /**
-    * Validate directory for project creation
-    */
+   * Validate directory for project creation
+   */
    async validateProjectDirectory(path: string): Promise<CommandResult<DirectoryValidationResult>> {
     try {
       const absolutePath = resolve(path);
@@ -352,8 +352,8 @@ export class DirectoryManager {
   }
 
   /**
-    * Calculate directory size and file count
-    */
+   * Calculate directory size and file count
+   */
    private async calculateDirectorySize(path: string): Promise<{ fileCount: number; size: number; }> {
     let size = 0;
     let fileCount = 0;
@@ -398,8 +398,8 @@ export class DirectoryManager {
   }
 
   /**
-    * Get directory entries
-    */
+   * Get directory entries
+   */
    private async getDirectoryEntries(path: string): Promise<string[]> {
      try {
        return await fs.promises.readdir(path);

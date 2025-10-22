@@ -40,6 +40,15 @@ export interface ProjectCodeConfig {
   defaultRootFolder: string;
   project?: {
     excludePatterns: string[];
+    gitignore?: {
+      cacheSize: number;
+      cacheTTL: number;
+      enabled: boolean;
+      includeGlobal: boolean;
+      maxTraversalDepth: number;
+      priority: 'config' | 'gitignore' | 'merge';
+      strictMode: boolean;
+    };
     includePatterns: string[];
     maxDepth: number;
     supportedTypes: ProjectType[];
@@ -93,8 +102,23 @@ export interface CommandResult<T = unknown> {
   success: boolean;
 }
 
+export interface GitignoreOptions {
+  cacheEnabled?: boolean;
+  cacheSize?: number;
+  cacheTTL?: number;
+  enabled: boolean;
+  includeGlobalGitignore?: boolean;
+  includeNestedGitignores?: boolean;
+  maxTraversalDepth?: number;
+  patternCombinationStrategy: 'merge' | 'override' | 'priority';
+  priorityOrder?: ('global' | 'local' | 'root')[];
+  respectGitignoreInParentDirs?: boolean;
+  strictMode?: boolean;
+}
+
 export interface ProjectDiscoveryOptions {
   excludePatterns?: string[];
+  gitignore?: GitignoreOptions;
   includePatterns?: string[];
   maxDepth?: number;
   rootFolders?: string[];
@@ -208,4 +232,32 @@ export interface SearchResult {
   file: string;
   line?: number;
   preview?: string;
+}
+
+export interface GitignorePattern {
+  directory: string;
+  lineNumber: number;
+  negated: boolean;
+  originalLine: string;
+  pattern: string;
+}
+
+export interface GitignoreFile {
+  error?: string;
+  lastModified: Date;
+  path: string;
+  patterns: GitignorePattern[];
+}
+
+export interface GitignoreCache {
+  files: Map<string, GitignoreFile>;
+  hitCount: number;
+  lastUpdated: Map<string, Date>;
+  missCount: number;
+}
+
+export interface GitignoreMatchResult {
+  excluded: boolean;
+  matchedBy?: GitignorePattern;
+  reason?: string;
 }
